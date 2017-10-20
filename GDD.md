@@ -1,10 +1,17 @@
 # Asteroides
+## Resumen
+Juego arcade donde una nave jugadora destruye asteroides disparando, mientras evita contacto con ellos y los ataques de las naves enemigas.
 
-Juego arcade donde una nave jugadora destruye asteroides disparando, mientras evita contacto con ellos y las naves enemigas que aparecen a veces.
+## Controles	
+-
+-
+## Escenario
 
+## Jugabilidad
 
  * GameObject
-	 * Interfaz
+ -> fdsfsdf
+	 * Interfaz/Immóviles
 	 	* vidas
 	 	* puntuación
 	 	* texto central
