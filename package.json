@@ -1,24 +1,33 @@
 {
   "version": "0.0.0",
   "name": "awesome-game",
-  "version": "0.0.0",
-  "author": "",
-  "license": "CC-BY-NC-SA-4.0",
-  
-  "repository": "gituser/awesome-game",
   "author": "gituser",
-  
+  "license": "CC-BY-NC-SA-4.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gituser/awesome-game.git"
+  },
   "dependencies": {
-    "browserify": "*",
     "browser-sync": "*",
+    "browserify": "*",
     "del": "*",
-    "gulp": "*",
+    "gulp": "^3.9.1",
     "gulp-connect": "*",
-    "gulp-gh-pages": "*", 
+    "gulp-gh-pages": "*",
     "gulp-util": "*",
     "merge-stream": "*",
     "phaser": "*",
     "vinyl-source-stream": "*",
     "watchify": "*"
+  },
+  "description": "Awesome game by\r [gituser](https://github.com/gituser).",
+  "bugs": {
+    "url": "https://github.com/gituser/awesome-game/issues"
+  },
+  "homepage": "https://github.com/gituser/awesome-game#readme",
+  "main": "gulpfile.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
