@@ -4,10 +4,12 @@ function preload() {
 
     game.load.image('space', 'images/deep-space.jpg');
     game.load.image('bullet', 'images/bullets2.png');
-    game.load.image('ship', 'images/ship2.png');
+    game.load.image('ship', 'images/ship.png');
+    game.load.image('ship2', 'images/ship2.png');
 }
 
 var player;
+var enemy;
 var cursors;
 
 var bullet;
@@ -31,6 +33,12 @@ function create() {
     bullets.createMultiple(40, 'bullet');
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 0.5);
+
+    enemy = game.add.sprite(300, 100, 'ship');
+    enemy.anchor.set(0.5);
+    game.physics.enable(enemy, Phaser.Physics.ARCADE);
+    enemy.body.drag.set(100);
+    enemy.body.maxVelocity.set(200);
     
 
     player = newPlayer();
@@ -43,7 +51,7 @@ function create() {
 function update() {
     
     player.update();
-
+    screenWrap(enemy);
     bullets.forEachExists(screenWrap, this);
 
 }
@@ -53,13 +61,13 @@ function newPlayer () {
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
     obj.body.maxVelocity.set(200);
-    obj.power = 1;
+    obj.power = 0;
     this.components = [];
 
     obj.shoot = shoot;
     obj.move = movement;
     obj.update = function () {
-        obj.shoot(this.power);
+        obj.shoot(obj.power);
         obj.move();
         }
     return obj;
