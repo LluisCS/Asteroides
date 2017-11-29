@@ -39,6 +39,7 @@ function create() {
     game.physics.enable(enemy, Phaser.Physics.ARCADE);
     enemy.body.drag.set(100);
     enemy.body.maxVelocity.set(200);
+   
     
 
     player = newPlayer();
@@ -51,17 +52,18 @@ function create() {
 function update() {
     
     player.update();
+    game.physics.arcade.velocityFromRotation(enemy.rotation, 200, enemy.body.velocity);
     screenWrap(enemy);
     bullets.forEachExists(screenWrap, this);
 
 }
 function newPlayer () {
-    var obj = game.add.sprite(300, 300, 'ship');
+    var obj = game.add.sprite(300, 300, 'ship2');
     obj.anchor.set(0.5);
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
     obj.body.maxVelocity.set(200);
-    obj.power = 0;
+    obj.power = 1;
     this.components = [];
 
     obj.shoot = shoot;
