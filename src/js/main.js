@@ -39,7 +39,7 @@ function create() {
     game.physics.enable(enemy, Phaser.Physics.ARCADE);
     enemy.body.drag.set(100);
     enemy.body.maxVelocity.set(200);
-    game.physics.arcade.accelerationFromRotation(enemy.rotation, 100, enemy.body.acceleration);
+    game.physics.arcade.accelerationFromRotation(enemy.rotation, 30, enemy.body.acceleration);
    
     
 
@@ -64,7 +64,7 @@ function newPlayer () {
     obj.anchor.set(0.5);
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
-    obj.body.maxVelocity.set(350);
+    obj.body.maxVelocity.set(800);
     obj.power = 1;
     this.components = [];
 
