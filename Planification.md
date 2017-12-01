@@ -4,6 +4,7 @@
 - Crear estructura de componentes para nave
     - Convertir movimiento en componente.
     - convertir disparo en componente.
+
 ## 2 Hito
 - Asteroide
     - Creación y movimiento.
@@ -17,6 +18,7 @@
 - Estructura de niveles.
 - Puntuación
 - Ranking
+
 ## 3 Hito
 - Power-Ups
     - Creación
