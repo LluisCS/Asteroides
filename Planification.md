@@ -1,3 +1,5 @@
+#Planificacion
+
 ##1 Hito
     -> Crear estructura de componentes para nave (en proceso)
     -> Convertir movimiento en componente.
