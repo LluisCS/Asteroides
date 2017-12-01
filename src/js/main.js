@@ -6,6 +6,14 @@ function preload() {
     game.load.image('bullet', 'images/bullets2.png');
     game.load.image('ship', 'images/ship.png');
     game.load.image('ship2', 'images/ship2.png');
+    game.load.image('BigAsteroid1', 'images/BigAsteroid1.png');
+    game.load.image('BigAsteroid2', 'images/BigAsteroid2.png');
+    game.load.image('BigAsteroid3', 'images/BigAsteroid3.png');
+    game.load.image('MidAsteroid1', 'images/MidAsteroid1.png');
+    game.load.image('MidAsteroid2', 'images/MidAsteroid2.png');
+    game.load.image('MidAsteroid3', 'images/MidAsteroid3.png');
+    game.load.image('LitAsteroid1', 'images/LitAsteroid1.png');
+    game.load.image('LitAsteroid1', 'images/LitAsteroid1.png');
 }
 
 var player;
@@ -33,6 +41,7 @@ function create() {
     bullets.createMultiple(40, 'bullet');
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 0.5);
+    
 
     enemy = game.add.sprite(300, 100, 'ship');
     enemy.anchor.set(0.5);
@@ -44,6 +53,7 @@ function create() {
     
 
     player = newPlayer();
+    asteroid = newAsteroid(0);
 
     cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
@@ -53,9 +63,11 @@ function create() {
 function update() {
     
     player.update();
-    
+    screenWrap(asteroid);
     screenWrap(enemy);
     game.physics.arcade.collide(player, enemy);
+    game.physics.arcade.collide(player, asteroid);
+    game.physics.arcade.collide(enemy, asteroid);
     bullets.forEachExists(screenWrap, this);
 
 }
@@ -65,7 +77,7 @@ function newPlayer () {
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
     obj.body.maxVelocity.set(800);
-    obj.power = 1;
+    obj.power = 0;
     this.components = [];
 
     obj.shoot = shoot;
@@ -73,6 +85,18 @@ function newPlayer () {
     obj.update = function () {
         obj.shoot(obj.power);
         obj.move();
+        }
+    return obj;
+}
+function newAsteroid (size) {
+    var obj = game.add.sprite(300, 500, 'BigAsteroid1');
+    obj.anchor.set(0.5);
+    game.physics.enable(obj, Phaser.Physics.ARCADE);
+    obj.body.drag.set(100);
+    obj.body.maxVelocity.set(200);
+
+    obj.update = function () {
+        
         }
     return obj;
 }
