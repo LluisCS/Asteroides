@@ -6,7 +6,7 @@ function preload() {
     game.load.image('space', 'images/deep-space.jpg');
     game.load.image('bullet', 'images/bullets2.png');
     game.load.image('ship', 'images/ship.png');
-    game.load.image('ship2', 'images/ship2.png');
+    game.load.image('ship2', 'images/ship3.png');
     game.load.image('3Asteroid1', 'images/BigAsteroid1.png');
     game.load.image('3Asteroid2', 'images/BigAsteroid2.png');
     game.load.image('3Asteroid3', 'images/BigAsteroid3.png');
@@ -20,11 +20,11 @@ function preload() {
 }
 
 var player;
-var enemy;
 var cursors;
+var GameManager;
 
-var bullet;
 var bullets;
+var asteroids;
 var bulletTime = 0;
 
 function create() {
@@ -36,23 +36,10 @@ function create() {
 
     game.add.tileSprite(0, 0, game.width, game.height, 'space');
 
-    
-    bullets = game.add.group();
-    bullets.enableBody = true;
-    bullets.physicsBodyType = Phaser.Physics.ARCADE;
-
-    bullets.createMultiple(40, 'bullet');
-    bullets.setAll('anchor.x', 0.5);
-    bullets.setAll('anchor.y', 0.5);
-    
-
-    enemy = newEnemy(200, 200);
-   
-    
-
-    player = newPlayer();
-    asteroid = newAsteroid(3, 500, 500);
-    asteroid2 = newAsteroid(2, 100, 400);
+    GameManager = newGameManager();
+    /*bullets = game.add.group();
+    asteroids = game.add.group();
+    player = newPlayer();*/
 
     cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
@@ -60,11 +47,34 @@ function create() {
 }
 
 function update() {
+    GameManager.update();
     game.world.callAll('update');
-    game.physics.arcade.collide(player, enemy);
-    bullets.forEachExists(screenWrap, this);
-    //game.debug.body(player);
+    asteroids.callAll('lateUpdate');
+    bullets.callAll('lateUpdate');
+    player.lateUpdate();
+}
 
+function newBullet (x, y, rot) {
+    var bullet = game.add.sprite(x, y, 'bullet');
+    bullet.anchor.set(0.5);
+    bullet.scale.setTo(0.5, 0.5);
+    game.physics.enable(bullet, Phaser.Physics.ARCADE);
+    bullet.lifespan = 1800;
+    bullet.rotation = rot;
+    bullet.marked = false;
+    bullet.update = function () {
+        game.physics.arcade.velocityFromRotation(rot, 400, this.body.velocity);
+        screenWrap(this);
+        if(game.physics.arcade.overlap(this, asteroids)){
+            this.marked = true;
+        }
+    }
+    bullet.lateUpdate = function () {
+        if(this.marked)
+            this.destroy();
+    }
+    bullets.add(bullet);
+    return bullet;
 }
 function newPlayer () {
     var obj = game.add.sprite(300, 300, 'ship2');
@@ -72,7 +82,8 @@ function newPlayer () {
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
     obj.body.maxVelocity.set(600);
-    obj.power = 0;
+    obj.power = 1;
+    obj.marked = 0;
     this.components = [];
 
     obj.shoot = shoot;
@@ -81,6 +92,12 @@ function newPlayer () {
         obj.shoot(obj.power);
         obj.move();
         }
+    obj.lateUpdate = function (){
+        if(this.marked){
+            this.kill();
+            game.time.events.add(Phaser.Timer.SECOND * 3, GameManager.playerDeath(), this);
+        }
+    }
     return obj;
 }
 function newEnemy (x, y) {
@@ -99,30 +116,36 @@ function newEnemy (x, y) {
 function newAsteroid (size, x , y) {
     if (size > 0 && size < 4){
         type = game.rnd.between(1,3);
-        var obj = game.add.sprite(x, y, size + 'Asteroid' + type);
-        obj.anchor.set(0.5);
-        game.physics.enable(obj, Phaser.Physics.ARCADE);
-        obj.body.drag.set(100);
+        var asteroid = game.add.sprite(x, y, size + 'Asteroid' + type);
+        asteroid.anchor.set(0.5);
+        asteroid.marked = false;
+        game.physics.enable(asteroid, Phaser.Physics.ARCADE);
+        asteroid.body.drag.set(100);
         var rotI = game.rnd.between(0,360);
-        obj.angle  = rotI;
+        asteroid.angle  = rotI;
         var speed = 140 - size * 10 + game.rnd.between(0,20);
-        obj.body.angularVelocity = 10;
-        obj.spawn = function ()
+        asteroid.body.angularVelocity = 10;
+        asteroid.spawn = function ()
         {
             newAsteroid(size-1, this.x + 10, this.y);
             newAsteroid(size-1, this.x - 10, this.y);
         }
-        obj.update = function () {
+        asteroid.update = function () {
             game.physics.arcade.velocityFromRotation(rotI, speed, this.body.velocity);
             screenWrap(this);
-            if(game.physics.arcade.overlap(this, bullets)){
-                bullet.destroy();
-                this.spawn();
-                this.destroy();
-                
+            if(game.physics.arcade.overlap(this, bullets)||game.physics.arcade.overlap(this, player)){
+                this.marked = true;
             }
         }
-        return obj;
+        asteroid.lateUpdate = function () {
+            if(this.marked)
+            {
+                this.spawn();
+                this.destroy();
+            }
+        }
+        asteroids.add(asteroid);
+        return asteroid;
     }
 }
 
@@ -154,39 +177,11 @@ var shoot = function (power) {
     {    
         if (game.time.now > bulletTime)
         {
-            
-            bullet = bullets.getFirstExists(false);
-    
-            if (bullet)
-            {
-                bullet.reset(this.body.x + 42, this.body.y + 25);
-                bullet.scale.setTo(0.5, 0.5);
-                bullet.lifespan = 1800;
-                bullet.rotation = this.rotation;
-                game.physics.arcade.velocityFromRotation(this.rotation, 400, bullet.body.velocity);
-                bulletTime = game.time.now + 450;
-                }
-                if (power == 1){
-                    bullet = bullets.getFirstExists(false);
-                    if (bullet)
-                    {
-                        bullet.reset(this.body.x + 42, this.body.y + 25);
-                        bullet.scale.setTo(0.5, 0.5);
-                        bullet.lifespan = 1800;
-                        bullet.rotation = this.rotation+0.2;
-                        game.physics.arcade.velocityFromRotation(this.rotation+0.2, 400, bullet.body.velocity);
-                        bulletTime = game.time.now + 450;
-                    }
-                    bullet = bullets.getFirstExists(false);
-                    if (bullet)
-                    {
-                        bullet.reset(this.body.x + 42, this.body.y + 25);
-                        bullet.scale.setTo(0.5, 0.5);
-                        bullet.lifespan = 1800;
-                        bullet.rotation = this.rotation-0.2;
-                        game.physics.arcade.velocityFromRotation(this.rotation-0.2, 400, bullet.body.velocity);
-                        bulletTime = game.time.now + 450;
-                    }
+            newBullet (this.body.x + 43, this.body.y + 31, this.rotation); 
+            bulletTime = game.time.now + 450;
+            if (power == 1){
+            newBullet (this.body.x + 43, this.body.y + 31, this.rotation+0.2);
+            newBullet (this.body.x + 43, this.body.y + 31, this.rotation-0.2);
             }
         }
     }
@@ -224,5 +219,36 @@ var enemyMov = function () {
 function render() {
 }
 
+function newGameManager (){
+    var GameManager = {};
+    GameManager.level = 0;
+    GameManager.lifes = 3;
+    player = newPlayer();
+    bullets = game.add.group();
+    asteroids = game.add.group();
+    GameManager.update = function (){
+        if (asteroids.length == 0)
+            this.createLevel();
+
+    }
+    GameManager.createLevel = function (){
+        player = newPlayer();
+        for (var i = 0; i < 2 + 2 * this.level;i++){
+            if (i%2==0)
+                newAsteroid(3,game.rnd.between(0,800),game.rnd.between(0,100));
+            else
+                newAsteroid(3,game.rnd.between(0,800),game.rnd.between(500,600));
+        }
+        this.level++;
+    }
+    GameManager.playerDeath = function (){
+        if(GameManager.lifes>0){
+            player = newPlayer();
+        }
+        else
+            GameManger = newGameManager();
+    }
+    return GameManager;
+}
 
 },{}]},{},[1]);
