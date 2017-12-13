@@ -48,7 +48,6 @@ function create() {
 
 function update() {
     GameManager.update();
-    game.world.callAll('update');
     asteroids.callAll('lateUpdate');
     bullets.callAll('lateUpdate');
     player.lateUpdate();
@@ -76,7 +75,7 @@ function newBullet (x, y, rot) {
     bullets.add(bullet);
     return bullet;
 }
-function newPlayer () {
+function newPlayer (revive) {
     var obj = game.add.sprite(300, 300, 'ship2');
     obj.anchor.set(0.5);
     game.physics.enable(obj, Phaser.Physics.ARCADE);
@@ -84,6 +83,10 @@ function newPlayer () {
     obj.body.maxVelocity.set(600);
     obj.power = 1;
     obj.marked = 0;
+    obj.immune = 0;
+    obj.timer = 0;
+    if(revive)
+        obj.revive();
     this.components = [];
 
     obj.shoot = shoot;
@@ -91,12 +94,24 @@ function newPlayer () {
     obj.update = function () {
         obj.shoot(obj.power);
         obj.move();
+        if(this.immune)
+            if (game.time.now > this.timer){
+                if(this.alpha == 1)
+                    this.alpha = 0.5;
+                else 
+                    this.alpha = 1;
+                this.timer = game.time.now + 300; 
+            }
         }
     obj.lateUpdate = function (){
         if(this.marked){
             this.kill();
-            game.time.events.add(Phaser.Timer.SECOND * 3, GameManager.playerDeath(), this);
+            GameManager.playerDeath();
         }
+    }
+    obj.revive = function (){
+        this.immune = 1;
+        game.time.events.add(Phaser.Timer.SECOND * 3, this.immune = 0, this);
     }
     return obj;
 }
@@ -177,11 +192,11 @@ var shoot = function (power) {
     {    
         if (game.time.now > bulletTime)
         {
-            newBullet (this.body.x + 43, this.body.y + 31, this.rotation); 
+            newBullet (this.body.x + 38, this.body.y + 28, this.rotation); 
             bulletTime = game.time.now + 450;
             if (power == 1){
-            newBullet (this.body.x + 43, this.body.y + 31, this.rotation+0.2);
-            newBullet (this.body.x + 43, this.body.y + 31, this.rotation-0.2);
+            newBullet (this.body.x + 38, this.body.y + 28, this.rotation+0.2);
+            newBullet (this.body.x + 38, this.body.y + 28, this.rotation-0.2);
             }
         }
     }
@@ -223,7 +238,7 @@ function newGameManager (){
     var GameManager = {};
     GameManager.level = 0;
     GameManager.lifes = 3;
-    player = newPlayer();
+    player = newPlayer(0);
     bullets = game.add.group();
     asteroids = game.add.group();
     GameManager.update = function (){
@@ -232,7 +247,8 @@ function newGameManager (){
 
     }
     GameManager.createLevel = function (){
-        player = newPlayer();
+        player.x = 400;
+        player.y = 300;
         for (var i = 0; i < 2 + 2 * this.level;i++){
             if (i%2==0)
                 newAsteroid(3,game.rnd.between(0,800),game.rnd.between(0,100));
@@ -243,7 +259,8 @@ function newGameManager (){
     }
     GameManager.playerDeath = function (){
         if(GameManager.lifes>0){
-            player = newPlayer();
+            player = newPlayer(1);
+            GameManager.lifes--;
         }
         else
             GameManger = newGameManager();
