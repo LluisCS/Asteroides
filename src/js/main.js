@@ -92,7 +92,7 @@ function newPlayer () {
         obj.shoot(obj.power);
         obj.move();
         if(game.physics.arcade.overlap(this, asteroids) && this.immune == 0)
-            this.marked = 1;
+            obj.marked = 1;
         if(this.immune){
             if (game.time.now > this.timer){
                 if(this.alpha == 1)
@@ -114,7 +114,10 @@ function newPlayer () {
         this.x = 400;
         this.y = 300;
         this.immune = 1;
-        game.time.events.add(Phaser.Timer.SECOND * 3, this.immune = 0, this);
+        game.time.events.add(Phaser.Timer.SECOND * 3, this.resetImmune(), this);
+    }
+    obj.resetImmune = function () {
+        obj.immune = 0;
     }
     return obj;
 }
