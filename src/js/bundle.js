@@ -4,7 +4,8 @@ var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'asteroides', { preload: pre
 function preload() {
 
     game.load.image('space', 'images/deep-space.jpg');
-    game.load.image('bullet', 'images/bullets2.png');
+    game.load.image('bullet', 'images/bullets3.png');
+    game.load.image('bullet2', 'images/bullets2.png');
     game.load.image('ship', 'images/ship.png');
     game.load.image('ship2', 'images/ship3.png');
     game.load.image('3Asteroid1', 'images/BigAsteroid1.png');
@@ -22,10 +23,10 @@ function preload() {
 var player;
 var cursors;
 var GameManager;
-var immune = 0;
 
 var bullets;
 var asteroids;
+var enemies;
 var bulletTime = 0;
 
 function create() {
@@ -38,9 +39,6 @@ function create() {
     game.add.tileSprite(0, 0, game.width, game.height, 'space');
 
     GameManager = newGameManager();
-    /*bullets = game.add.group();
-    asteroids = game.add.group();
-    player = newPlayer();*/
 
     cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
@@ -52,22 +50,38 @@ function update() {
     player.lateUpdate();
     asteroids.callAll('lateUpdate');
     bullets.callAll('lateUpdate');
+    enemies.callAll('lateUpdate');
 }
 
-function newBullet (x, y, rot) {
-    var bullet = game.add.sprite(x, y, 'bullet');
+function newBullet (x, y, rot, speed, ally) {
+    var skin;
+    if(ally)
+        skin ='bullet2';
+    else
+        skin ='bullet';
+    var bullet = game.add.sprite(x, y, skin);
     bullet.anchor.set(0.5);
     bullet.scale.setTo(0.5, 0.5);
     game.physics.enable(bullet, Phaser.Physics.ARCADE);
-    bullet.lifespan = 1800;
+    bullet.lifespan = 1600;
     bullet.rotation = rot;
     bullet.marked = false;
+    bullet.ally = ally;
     bullet.update = function () {
-        game.physics.arcade.velocityFromRotation(rot, 400, this.body.velocity);
+        game.physics.arcade.velocityFromRotation(rot, speed, this.body.velocity);
         screenWrap(this);
         if(game.physics.arcade.overlap(this, asteroids)){
             this.marked = true;
         }
+        if(ally){
+            if (game.physics.arcade.overlap(this, enemies))
+            this.marked = true;
+        }
+        else
+            if (game.physics.arcade.overlap(this, player)){
+               this.marked = true;
+               player.marked = true; 
+            }
     }
     bullet.lateUpdate = function () {
         if(this.marked)
@@ -82,9 +96,9 @@ function newPlayer () {
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
     obj.body.maxVelocity.set(500);
-    obj.power = 1;
+    obj.power = 0;
     obj.marked = 0;
-    //obj.immune = 0;
+    obj.immune = 0;
     obj.timer = 0;
     obj.period = 0;
     this.components = [];
@@ -94,9 +108,9 @@ function newPlayer () {
     obj.update = function () {
         obj.shoot(obj.power);
         obj.move();
-        if(immune == 0 && game.physics.arcade.overlap(this, asteroids))
+        if(obj.immune == 0 && game.physics.arcade.overlap(this, asteroids))
             this.marked = 1;
-        if(immune == 1){
+        if(obj.immune == 1){
             if (game.time.now > this.timer){
                 if(this.alpha == 1)
                     this.alpha = 0.5;
@@ -105,7 +119,7 @@ function newPlayer () {
                 this.timer = game.time.now + 300; 
             }
             if(game.time.now > obj.period + 3000){
-                immune = 0;
+                obj.immune = 0;
                 this.alpha = 1;
             }
         }
@@ -117,29 +131,54 @@ function newPlayer () {
         }
     }
     obj.revive = function (){
-        immune = 1;
+        obj.immune = 1;
         this.body.acceleration.set(0);
         this.body.velocity.set(0);
         this.x = 400;
         this.y = 300;
         obj.period = game.time.now;
     }
-    obj.resetImmune = function () {
-        immune = 0;
-    }
     return obj;
 }
 function newEnemy (x, y) {
     var obj = game.add.sprite(x, y, 'ship');
     obj.anchor.set(0.5);
+    obj.marked = false;
+    obj.timer = 0;
+    obj.shooter = 0;
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
-    obj.body.maxVelocity.set(200);
-    //obj.move = enemyMov();
+    obj.body.maxVelocity.set(130);
+    var speed;
+    if(game.rnd.between(0,1))
+        obj.angle = 180;
+    
     game.physics.arcade.accelerationFromRotation(obj.rotation, 30, obj.body.acceleration);
     obj.update = function () {
+        if (game.physics.arcade.overlap(this, asteroids))
+            this.marked = true;
+        if (game.physics.arcade.overlap(this, player)){
+            this.marked = true;
+            player.marked = true;
+        }
+        bullets.forEach(element => {
+            if(game.physics.arcade.overlap(obj, element) && element.ally)
+                obj.marked = true;
+        });
+        if(game.time.now > obj.timer){
+            if(this.shooter == 0)
+                this.shooter = 1;
+            else
+                newBullet(this.x, this.y, game.physics.arcade.angleBetween(this, player), 200, false);
+            obj.timer = game.time.now + 5000;
+        }
         screenWrap(this);
         }
+    obj.lateUpdate = function (){
+        if(this.marked)
+            this.destroy();
+    }
+    enemies.add(obj);
     return obj;
 }
 function newAsteroid (size, x , y) {
@@ -152,7 +191,7 @@ function newAsteroid (size, x , y) {
         asteroid.body.drag.set(100);
         var rotI = game.rnd.between(0,360);
         asteroid.angle  = rotI;
-        var speed = 140 - size * 10 + game.rnd.between(0,20);
+        var speed = 140 - size * 20 + game.rnd.between(0,20);
         asteroid.body.angularVelocity = 10;
         asteroid.spawn = function ()
         {
@@ -162,10 +201,10 @@ function newAsteroid (size, x , y) {
         asteroid.update = function () {
             game.physics.arcade.velocityFromRotation(rotI, speed, this.body.velocity);
             screenWrap(this);
-            if (game.physics.arcade.overlap(this, bullets)){
+            if (game.physics.arcade.overlap(this, bullets) || game.physics.arcade.overlap(this, enemies)){
                 this.marked = true;
             }
-            if (immune == 0 && game.physics.arcade.overlap(this, player))
+            if (player.immune == 0 && game.physics.arcade.overlap(this, player))
                 this.marked = true;
         }
         asteroid.lateUpdate = function () {
@@ -208,11 +247,11 @@ var shoot = function (power) {
     {    
         if (game.time.now > bulletTime)
         {
-            newBullet (this.body.x + 38, this.body.y + 28, this.rotation); 
+            newBullet (this.body.x + 28, this.body.y + 20, this.rotation, 400, true); 
             bulletTime = game.time.now + 450;
             if (power == 1){
-            newBullet (this.body.x + 38, this.body.y + 28, this.rotation+0.2);
-            newBullet (this.body.x + 38, this.body.y + 28, this.rotation-0.2);
+            newBullet (this.body.x + 28, this.body.y + 20, this.rotation+0.2, 400, true);
+            newBullet (this.body.x + 28, this.body.y + 20, this.rotation-0.2, 400, true);
             }
         }
     }
@@ -254,19 +293,27 @@ function newGameManager (){
     var GameManager = {};
     GameManager.level = 0;
     GameManager.lifes = 3;
+    GameManager.timer = 0;
     player = newPlayer();
     bullets = game.add.group();
     asteroids = game.add.group();
+    enemies = game.add.group();
     GameManager.update = function (){
         if (asteroids.length == 0)
             this.createLevel();
-
+        else
+            if(game.time.now > this.timer){
+                if(game.rnd.between(0, 100) + GameManager.level * 3 > 85)
+                    newEnemy(0, game.rnd.between(50,550));
+                this.timer = game.time.now + 3000;
+            }
     }
     GameManager.createLevel = function (){
         player.x = 400;
         player.y = 300;
         bullets.removeAll(true);
-        for (var i = 0; i < 2 + 2 * this.level;i++){
+        enemies.removeAll(true);
+        for (var i = 0; i < 2 + this.level;i++){
             if (i%2==0)
                 newAsteroid(3,game.rnd.between(0,800),game.rnd.between(0,100));
             else
@@ -290,6 +337,7 @@ function newGameManager (){
         this.level = 0;
         asteroids.removeAll(true);
         bullets.removeAll(true);
+        enemies.removeAll(true);
     }
     return GameManager;
 }
