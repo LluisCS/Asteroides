@@ -21,6 +21,7 @@ function preload() {
 var player;
 var cursors;
 var GameManager;
+var immune = 0;
 
 var bullets;
 var asteroids;
@@ -79,11 +80,12 @@ function newPlayer () {
     obj.anchor.set(0.5);
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
-    obj.body.maxVelocity.set(600);
-    obj.power = 0;
+    obj.body.maxVelocity.set(500);
+    obj.power = 1;
     obj.marked = 0;
-    obj.immune = 0;
+    //obj.immune = 0;
     obj.timer = 0;
+    obj.period = 0;
     this.components = [];
 
     obj.shoot = shoot;
@@ -91,33 +93,38 @@ function newPlayer () {
     obj.update = function () {
         obj.shoot(obj.power);
         obj.move();
-        if(game.physics.arcade.overlap(this, asteroids) && this.immune == 0)
-            obj.marked = 1;
-        if(this.immune){
+        if(immune == 0 && game.physics.arcade.overlap(this, asteroids))
+            this.marked = 1;
+        if(immune == 1){
             if (game.time.now > this.timer){
                 if(this.alpha == 1)
                     this.alpha = 0.5;
                 else 
                     this.alpha = 1;
                 this.timer = game.time.now + 300; 
-                }
+            }
+            if(game.time.now > obj.period + 3000){
+                immune = 0;
+                this.alpha = 1;
             }
         }
+    }
     obj.lateUpdate = function (){
         if(this.marked == 1){
-            this.immune = 1;
             this.marked = 0;
             GameManager.playerDeath();
         }
     }
     obj.revive = function (){
+        immune = 1;
+        this.body.acceleration.set(0);
+        this.body.velocity.set(0);
         this.x = 400;
         this.y = 300;
-        this.immune = 1;
-        game.time.events.add(Phaser.Timer.SECOND * 3, this.resetImmune(), this);
+        obj.period = game.time.now;
     }
     obj.resetImmune = function () {
-        obj.immune = 0;
+        immune = 0;
     }
     return obj;
 }
@@ -154,9 +161,11 @@ function newAsteroid (size, x , y) {
         asteroid.update = function () {
             game.physics.arcade.velocityFromRotation(rotI, speed, this.body.velocity);
             screenWrap(this);
-            if(game.physics.arcade.overlap(this, bullets)||(game.physics.arcade.overlap(this, player) && player.immune == 0)){
+            if (game.physics.arcade.overlap(this, bullets)){
                 this.marked = true;
             }
+            if (immune == 0 && game.physics.arcade.overlap(this, player))
+                this.marked = true;
         }
         asteroid.lateUpdate = function () {
             if(this.marked)
@@ -255,6 +264,7 @@ function newGameManager (){
     GameManager.createLevel = function (){
         player.x = 400;
         player.y = 300;
+        bullets.removeAll(true);
         for (var i = 0; i < 2 + 2 * this.level;i++){
             if (i%2==0)
                 newAsteroid(3,game.rnd.between(0,800),game.rnd.between(0,100));
@@ -264,12 +274,21 @@ function newGameManager (){
         this.level++;
     }
     GameManager.playerDeath = function (){
-        if(GameManager.lifes>0){
+        if(GameManager.lifes > 0){
             player.revive();
             GameManager.lifes--;
         }
-        else
-            this = newGameManager();
+        else {
+           this.resetGame();
+        }
+    }
+    GameManager.resetGame = function (){
+        player.destroy();
+        player = newPlayer();
+        this.lifes = 3;
+        this.level = 0;
+        asteroids.removeAll(true);
+        bullets.removeAll(true);
     }
     return GameManager;
 }
