@@ -17,12 +17,17 @@ function preload() {
     game.load.image('1Asteroid1', 'images/LitAsteroid1.png');
     game.load.image('1Asteroid2', 'images/LitAsteroid2.png');
     game.load.image('1Asteroid3', 'images/LitAsteroid2.png');
-    
+    game.load.audio('blaster', 'audio/blaster.mp3');
+    game.load.audio('destruct', 'audio/destruction.mp3');
+    game.load.audio('explode', 'audio/explosion.mp3');
+    game.load.audio('enemyBlaster', 'audio/enemyBlaster.mp3');
 }
 
 var player;
 var cursors;
 var GameManager;
+var laser, destruction, explosion, enBlaster;
+
 
 var bullets;
 var asteroids;
@@ -30,6 +35,10 @@ var enemies;
 var bulletTime = 0;
 
 function create() {
+    laser = game.add.audio('blaster', 0.1);
+    destruction = game.add.audio('destruct', 0.1);
+    explosion = game.add.audio('explode', 0.2);
+    enBlaster = game.add.audio('enemyBlaster', 0.3);
 
     game.renderer.clearBeforeRender = false;
     game.renderer.roundPixels = true;
@@ -78,7 +87,7 @@ function newBullet (x, y, rot, speed, ally) {
             this.marked = true;
         }
         else
-            if (game.physics.arcade.overlap(this, player)){
+            if (player.immune == 0 && game.physics.arcade.overlap(this, player)){
                this.marked = true;
                player.marked = true; 
             }
@@ -126,6 +135,7 @@ function newPlayer () {
     }
     obj.lateUpdate = function (){
         if(this.marked == 1){
+            explosion.play();
             this.marked = 0;
             GameManager.playerDeath();
         }
@@ -157,7 +167,7 @@ function newEnemy (x, y) {
     obj.update = function () {
         if (game.physics.arcade.overlap(this, asteroids))
             this.marked = true;
-        if (game.physics.arcade.overlap(this, player)){
+        if (player.immune == 0 && game.physics.arcade.overlap(this, player)){
             this.marked = true;
             player.marked = true;
         }
@@ -168,15 +178,20 @@ function newEnemy (x, y) {
         if(game.time.now > obj.timer){
             if(this.shooter == 0)
                 this.shooter = 1;
-            else
+            else{
+                enBlaster.play();
                 newBullet(this.x, this.y, game.physics.arcade.angleBetween(this, player), 200, false);
+            }
             obj.timer = game.time.now + 5000;
         }
         screenWrap(this);
         }
     obj.lateUpdate = function (){
-        if(this.marked)
+        if(this.marked){
+            explosion.play();
             this.destroy();
+            destruction.play();
+        }
     }
     enemies.add(obj);
     return obj;
@@ -210,6 +225,7 @@ function newAsteroid (size, x , y) {
         asteroid.lateUpdate = function () {
             if(this.marked)
             {
+                destruction.play();
                 this.spawn();
                 this.destroy();
             }
@@ -247,6 +263,7 @@ var shoot = function (power) {
     {    
         if (game.time.now > bulletTime)
         {
+            laser.play();
             newBullet (this.body.x + 28, this.body.y + 20, this.rotation, 400, true); 
             bulletTime = game.time.now + 450;
             if (power == 1){
