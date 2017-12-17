@@ -21,12 +21,13 @@ function preload() {
     game.load.audio('destruct', 'audio/destruction.mp3');
     game.load.audio('explode', 'audio/explosion.mp3');
     game.load.audio('enemyBlaster', 'audio/enemyBlaster.mp3');
+    game.load.audio('ambientMusic', 'audio/DM DOKURO - Scourge of The Universe.mp3')
 }
 
 var player;
 var cursors;
 var GameManager;
-var laser, destruction, explosion, enBlaster;
+var laser, destruction, explosion, enBlaster, music;
 
 
 var bullets;
@@ -39,6 +40,8 @@ function create() {
     destruction = game.add.audio('destruct', 0.1);
     explosion = game.add.audio('explode', 0.2);
     enBlaster = game.add.audio('enemyBlaster', 0.3);
+    music = game.add.audio('ambientMusic', 0.07);
+    //music.play();
 
     game.renderer.clearBeforeRender = false;
     game.renderer.roundPixels = true;
@@ -72,7 +75,7 @@ function newBullet (x, y, rot, speed, ally) {
     bullet.anchor.set(0.5);
     bullet.scale.setTo(0.5, 0.5);
     game.physics.enable(bullet, Phaser.Physics.ARCADE);
-    bullet.lifespan = 1600;
+    bullet.lifespan = 1300;
     bullet.rotation = rot;
     bullet.marked = false;
     bullet.ally = ally;
@@ -104,7 +107,7 @@ function newPlayer () {
     obj.anchor.set(0.5);
     game.physics.enable(obj, Phaser.Physics.ARCADE);
     obj.body.drag.set(100);
-    obj.body.maxVelocity.set(500);
+    obj.body.maxVelocity.set(400);
     obj.power = 0;
     obj.marked = 0;
     obj.immune = 0;
@@ -180,9 +183,9 @@ function newEnemy (x, y) {
                 this.shooter = 1;
             else{
                 enBlaster.play();
-                newBullet(this.x, this.y, game.physics.arcade.angleBetween(this, player), 200, false);
+                newBullet(this.x, this.y, game.physics.arcade.angleBetween(this, player), 240, false);
             }
-            obj.timer = game.time.now + 5000;
+            obj.timer = game.time.now + 3000;
         }
         screenWrap(this);
         }
@@ -264,11 +267,11 @@ var shoot = function (power) {
         if (game.time.now > bulletTime)
         {
             laser.play();
-            newBullet (this.body.x + 28, this.body.y + 20, this.rotation, 400, true); 
-            bulletTime = game.time.now + 450;
+            newBullet (this.body.x + 28, this.body.y + 20, this.rotation, 450, true); 
+            bulletTime = game.time.now + 350;
             if (power == 1){
-            newBullet (this.body.x + 28, this.body.y + 20, this.rotation+0.2, 400, true);
-            newBullet (this.body.x + 28, this.body.y + 20, this.rotation-0.2, 400, true);
+            newBullet (this.body.x + 28, this.body.y + 20, this.rotation+0.2, 450, true);
+            newBullet (this.body.x + 28, this.body.y + 20, this.rotation-0.2, 450, true);
             }
         }
     }
@@ -277,7 +280,7 @@ var shoot = function (power) {
 var playerMov = function () {
     if (cursors.up.isDown)
     {
-        game.physics.arcade.accelerationFromRotation(this.rotation, 200, this.body.acceleration);
+        game.physics.arcade.accelerationFromRotation(this.rotation, 250, this.body.acceleration);
     }
     else
     {
