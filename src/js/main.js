@@ -179,9 +179,9 @@ function newEnemy (x, y) {
                 this.shooter = 1;
             else{
                 enBlaster.play();
-                newBullet(this.x, this.y, game.physics.arcade.angleBetween(this, player), 200, false);
+                newBullet(this.x, this.y, game.physics.arcade.angleBetween(this, player), 300, false);
             }
-            obj.timer = game.time.now + 5000;
+            obj.timer = game.time.now + 3000;
         }
         screenWrap(this);
         }
