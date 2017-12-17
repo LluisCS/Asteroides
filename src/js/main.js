@@ -18,15 +18,14 @@ function preload() {
     game.load.image('1Asteroid3', 'images/LitAsteroid2.png');
     game.load.audio('blaster', 'audio/blaster.mp3');
     game.load.audio('destruct', 'audio/destruction.mp3');
-    game.load.audio('explode', 'audio/explosion.mp3');
-    game.load.audio('enemyBlaster', 'audio/enemyBlaster.mp3');
+    
 }
 
 var player;
 var cursors;
 var GameManager;
-var laser, destruction, explosion, enBlaster;
-
+var laser;
+var destruction;
 
 var bullets;
 var asteroids;
@@ -36,8 +35,6 @@ var bulletTime = 0;
 function create() {
     laser = game.add.audio('blaster', 0.1);
     destruction = game.add.audio('destruct', 0.1);
-    explosion = game.add.audio('explode', 0.2);
-    enBlaster = game.add.audio('enemyBlaster', 0.3);
 
     game.renderer.clearBeforeRender = false;
     game.renderer.roundPixels = true;
@@ -134,7 +131,6 @@ function newPlayer () {
     }
     obj.lateUpdate = function (){
         if(this.marked == 1){
-            explosion.play();
             this.marked = 0;
             GameManager.playerDeath();
         }
@@ -177,17 +173,14 @@ function newEnemy (x, y) {
         if(game.time.now > obj.timer){
             if(this.shooter == 0)
                 this.shooter = 1;
-            else{
-                enBlaster.play();
+            else
                 newBullet(this.x, this.y, game.physics.arcade.angleBetween(this, player), 200, false);
-            }
             obj.timer = game.time.now + 5000;
         }
         screenWrap(this);
         }
     obj.lateUpdate = function (){
         if(this.marked){
-            explosion.play();
             this.destroy();
             destruction.play();
         }
