@@ -1,7 +1,19 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'asteroides', { preload: preload, create: create, update: update, render: render });
+WebFontConfig = {
+    
+        
+        //active: function() { game.time.events.add(Phaser.Timer.SECOND, createText, this); },
+    
+        google: {
+          families: ['Press Start 2P']
+        }
+    
+    };
 
 function preload() {
+
+    game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
 
     game.load.image('space', 'images/deep-space.jpg');
     game.load.image('bullet', 'images/bullets3.png');
@@ -28,7 +40,7 @@ var player;
 var cursors;
 var GameManager;
 var laser, destruction, explosion, enBlaster, music;
-
+var scoreText;
 
 var bullets;
 var asteroids;
@@ -75,7 +87,10 @@ function newBullet (x, y, rot, speed, ally) {
     bullet.anchor.set(0.5);
     bullet.scale.setTo(0.5, 0.5);
     game.physics.enable(bullet, Phaser.Physics.ARCADE);
-    bullet.lifespan = 1300;
+    if(ally)
+        bullet.lifespan = 1200;
+    else
+        bullet.lifespan = 2000;                
     bullet.rotation = rot;
     bullet.marked = false;
     bullet.ally = ally;
@@ -157,6 +172,7 @@ function newEnemy (x, y) {
     var obj = game.add.sprite(x, y, 'ship');
     obj.anchor.set(0.5);
     obj.marked = false;
+    obj.points = 200;
     obj.timer = 0;
     obj.shooter = 0;
     game.physics.enable(obj, Phaser.Physics.ARCADE);
@@ -175,8 +191,10 @@ function newEnemy (x, y) {
             player.marked = true;
         }
         bullets.forEach(element => {
-            if(game.physics.arcade.overlap(obj, element) && element.ally)
+            if(game.physics.arcade.overlap(obj, element) && element.ally){
                 obj.marked = true;
+                GameManager.addScore(this.points);
+            }
         });
         if(game.time.now > obj.timer){
             if(this.shooter == 0)
@@ -203,13 +221,19 @@ function newAsteroid (size, x , y) {
     if (size > 0 && size < 4){
         type = game.rnd.between(1,3);
         var asteroid = game.add.sprite(x, y, size + 'Asteroid' + type);
+        if(size == 3)
+            asteroid.points = 20;
+        else if(size == 2)
+            asteroid.points = 50;
+        else
+            asteroid.points = 100;
         asteroid.anchor.set(0.5);
         asteroid.marked = false;
         game.physics.enable(asteroid, Phaser.Physics.ARCADE);
         asteroid.body.drag.set(100);
         var rotI = game.rnd.between(0,360);
         asteroid.angle  = rotI;
-        var speed = 140 - size * 20 + game.rnd.between(0,20);
+        var speed = 185 - size * 20 - game.rnd.between(0, 80);
         asteroid.body.angularVelocity = 10;
         asteroid.spawn = function ()
         {
@@ -228,6 +252,7 @@ function newAsteroid (size, x , y) {
         asteroid.lateUpdate = function () {
             if(this.marked)
             {
+                GameManager.addScore(this.points);
                 destruction.play();
                 this.spawn();
                 this.destroy();
@@ -314,10 +339,16 @@ function newGameManager (){
     GameManager.level = 0;
     GameManager.lifes = 3;
     GameManager.timer = 0;
+    GameManager.score = 0;
     player = newPlayer();
     bullets = game.add.group();
     asteroids = game.add.group();
     enemies = game.add.group();
+    scoreText = game.add.text(75, 20, "Score 0");
+    scoreText.anchor.setTo(0.5);
+    scoreText.font = 'Press Start 2P';
+    scoreText.fontSize = 13;
+    scoreText.fill ='#ffffff';
     GameManager.update = function (){
         if (asteroids.length == 0)
             this.createLevel();
@@ -355,9 +386,15 @@ function newGameManager (){
         player = newPlayer();
         this.lifes = 3;
         this.level = 0;
+        this.score = 0;
+        scoreText.setText("Score: "+ GameManager.score);
         asteroids.removeAll(true);
         bullets.removeAll(true);
         enemies.removeAll(true);
+    }
+    GameManager.addScore = function(points ){
+        GameManager.score += points;
+        scoreText.setText("Score "+ GameManager.score);
     }
     return GameManager;
 }
