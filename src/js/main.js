@@ -242,16 +242,18 @@ function newAsteroid (size, x , y) {
         asteroid.update = function () {
             game.physics.arcade.velocityFromRotation(rotI, speed, this.body.velocity);
             screenWrap(this);
-            if (game.physics.arcade.overlap(this, bullets) || game.physics.arcade.overlap(this, enemies)){
+            if (game.physics.arcade.overlap(this, bullets)){
+                GameManager.addScore(this.points);
                 this.marked = true;
             }
+            if(game.physics.arcade.overlap(this, enemies))
+                this.marked = true;
             if (player.immune == 0 && game.physics.arcade.overlap(this, player))
                 this.marked = true;
         }
         asteroid.lateUpdate = function () {
             if(this.marked)
             {
-                GameManager.addScore(this.points);
                 destruction.play();
                 this.spawn();
                 this.destroy();
