@@ -45,6 +45,7 @@ var scoreText;
 var bullets;
 var asteroids;
 var enemies;
+var livesUI;
 var bulletTime = 0;
 
 function create() {
@@ -243,16 +244,18 @@ function newAsteroid (size, x , y) {
         asteroid.update = function () {
             game.physics.arcade.velocityFromRotation(rotI, speed, this.body.velocity);
             screenWrap(this);
-            if (game.physics.arcade.overlap(this, bullets) || game.physics.arcade.overlap(this, enemies)){
+            if (game.physics.arcade.overlap(this, bullets)){
+                GameManager.addScore(this.points);
                 this.marked = true;
             }
+            if(game.physics.arcade.overlap(this, enemies))
+                this.marked = true;
             if (player.immune == 0 && game.physics.arcade.overlap(this, player))
                 this.marked = true;
         }
         asteroid.lateUpdate = function () {
             if(this.marked)
             {
-                GameManager.addScore(this.points);
                 destruction.play();
                 this.spawn();
                 this.destroy();
@@ -305,7 +308,7 @@ var shoot = function (power) {
 var playerMov = function () {
     if (cursors.up.isDown)
     {
-        game.physics.arcade.accelerationFromRotation(this.rotation, 250, this.body.acceleration);
+        game.physics.arcade.accelerationFromRotation(this.rotation, 230, this.body.acceleration);
     }
     else
     {
@@ -336,35 +339,70 @@ function render() {
 
 function newGameManager (){
     var GameManager = {};
-    GameManager.level = 0;
+    GameManager.level = 1;
     GameManager.lifes = 3;
     GameManager.timer = 0;
     GameManager.score = 0;
+    GameManager.ini = false;
     player = newPlayer();
     bullets = game.add.group();
     asteroids = game.add.group();
     enemies = game.add.group();
+    livesUI = game.add.group();
     scoreText = game.add.text(75, 20, "Score 0");
     scoreText.anchor.setTo(0.5);
     scoreText.font = 'Press Start 2P';
     scoreText.fontSize = 13;
     scoreText.fill ='#ffffff';
+    LvlText = game.add.text(400, 300, "L E V E L  1");
+    LvlText.anchor.setTo(0.5);
+    LvlText.font = 'Press Start 2P';
+    LvlText.fontSize = 60;
+    LvlText.fill ='#ffffff';
+    LvlText.visible = false;
     GameManager.update = function (){
-        if (asteroids.length == 0)
-            this.createLevel();
-        else
-            if(game.time.now > this.timer){
-                if(game.rnd.between(0, 100) + GameManager.level * 3 > 85)
-                    newEnemy(0, game.rnd.between(50,550));
-                this.timer = game.time.now + 3000;
+        if(!this.ini){
+            if (asteroids.length == 0){
+                GameManager.updateUI();
+                player.x = 400;
+                player.y = 300;
+                bullets.removeAll(true);
+                enemies.removeAll(true);
+                game.world.bringToTop(LvlText);
+                LvlText.setText("L E V E L  " + this.level);
+                LvlText.visible = true;
+                this.ini = true;
+                this.timer = game.time.now + 2300;
             }
+            else
+                if(game.time.now > this.timer){
+                    if(game.rnd.between(0, 100) + GameManager.level * 3 > 85)
+                        newEnemy(0, game.rnd.between(50,550));
+                    this.timer = game.time.now + 4000;
+                }
+            }
+        else{
+            if (game.time.now > this.timer){
+                LvlText.visible = false;
+                this.createLevel();
+                this.ini = false;
+            }
+        }
+    }
+    GameManager.updateUI = function() {
+        livesUI.removeAll(true);
+        for (var i = 0; i < GameManager.lifes; i++){
+            var ship = game.add.sprite (30 + i*20, 65, 'ship2');
+            ship.angle -= 90;
+            ship.scale.setTo(0.7,0.7);
+            livesUI.add(ship);
+        }
+
     }
     GameManager.createLevel = function (){
-        player.x = 400;
-        player.y = 300;
-        bullets.removeAll(true);
-        enemies.removeAll(true);
-        for (var i = 0; i < 2 + this.level;i++){
+        game.world.bringToTop(scoreText);
+        game.world.bringToTop(livesUI);
+        for (var i = 0; i < 2 + this.level - 1;i++){
             if (i%2==0)
                 newAsteroid(3,game.rnd.between(0,800),game.rnd.between(0,100));
             else
@@ -380,12 +418,13 @@ function newGameManager (){
         else {
            this.resetGame();
         }
+        GameManager.updateUI();
     }
     GameManager.resetGame = function (){
         player.destroy();
         player = newPlayer();
         this.lifes = 3;
-        this.level = 0;
+        this.level = 1;
         this.score = 0;
         scoreText.setText("Score: "+ GameManager.score);
         asteroids.removeAll(true);
