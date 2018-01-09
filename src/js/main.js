@@ -1,13 +1,15 @@
 var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'asteroides', { preload: preload, create: create, update: update, render: render });
+
+//game.state.add('menu', menuState);
+//game.state.add('play', playState);
+
+
+
 WebFontConfig = {
-    
-        
         //active: function() { game.time.events.add(Phaser.Timer.SECOND, createText, this); },
-    
         google: {
           families: ['Press Start 2P']
         }
-    
     };
 
 function preload() {
@@ -28,13 +30,20 @@ function preload() {
     game.load.image('1Asteroid1', 'images/LitAsteroid1.png');
     game.load.image('1Asteroid2', 'images/LitAsteroid2.png');
     game.load.image('1Asteroid3', 'images/LitAsteroid2.png');
+    game.load.spritesheet('expAnim', 'images/explosion_anim.png', 134, 134, 12);
     game.load.audio('blaster', 'audio/blaster.mp3');
     game.load.audio('destruct', 'audio/destruction.mp3');
     game.load.audio('explode', 'audio/explosion.mp3');
     game.load.audio('enemyBlaster', 'audio/enemyBlaster.mp3');
     game.load.audio('ambientMusic', 'audio/DM DOKURO - Scourge of The Universe.mp3')
-}
+    }
+    //game.state.play('menu', menuState);
 
+/*var menuState = function() {
+    game.add.tileSprite(0, 0, game.width, game.height, 'space');
+    game.state.PLAY('play', playState);
+}
+*/
 var player;
 var cursors;
 var GameManager;
@@ -99,6 +108,7 @@ function newBullet (x, y, rot, speed, ally) {
         screenWrap(this);
         if(game.physics.arcade.overlap(this, asteroids)){
             this.marked = true;
+            createExplosion(this.x - 20 , this.y - 20, 0.3);
         }
         if(ally){
             if (game.physics.arcade.overlap(this, enemies))
@@ -154,6 +164,7 @@ function newPlayer () {
     obj.lateUpdate = function (){
         if(this.marked == 1){
             explosion.play();
+            createExplosion(this.x - 60 , this.y - 60, 0.9);
             this.marked = 0;
             GameManager.playerDeath();
         }
@@ -210,6 +221,7 @@ function newEnemy (x, y) {
     obj.lateUpdate = function (){
         if(this.marked){
             explosion.play();
+            createExplosion(this.x - 50 , this.y - 50, 0.6);
             this.destroy();
             destruction.play();
         }
@@ -329,10 +341,16 @@ var playerMov = function () {
     screenWrap(this);
 
 };
-
-var enemyMov = function () {
-    screenWrap(this);
-};
+function createExplosion (x, y, size){
+    exp = game.add.sprite(x, y, 'expAnim');
+    exp.scale.set(size);
+    anim = exp.animations.add('boom');
+    anim.play(25, false);
+    anim.onComplete.add(EndAnimation, this);
+}
+function EndAnimation(sprite, animation){
+    sprite.destroy();
+}
 function render() {
 }
 
