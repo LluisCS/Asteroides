@@ -31,6 +31,9 @@ function preload() {
     game.load.image('1Asteroid1', 'images/LitAsteroid1.png');
     game.load.image('1Asteroid2', 'images/LitAsteroid2.png');
     game.load.image('1Asteroid3', 'images/LitAsteroid2.png');
+    game.load.image('head', 'images/DevourerHead.png');
+    game.load.image('body', 'images/DevourerBody.png');
+    game.load.image('tail', 'images/DevourerTail.png');
     game.load.spritesheet('expAnim', 'images/explosion_anim.png', 134, 134, 12);
     game.load.audio('blaster', 'audio/blaster.mp3');
     game.load.audio('destruct', 'audio/destruction.mp3');
@@ -317,6 +320,60 @@ var shoot = function (power) {
     }
 };
 
+function newBoss () {
+    var spacing = 7;
+    var sections = 20 + GameManager.level;
+    var bossBody = new Array();
+    var bossPath = new Array();
+    for (var i = sections - 1; i >= 1; i--){
+        if (i == sections - 1)
+            bossBody[i] = game.add.sprite(40, 40, 'tail');
+        else
+            bossBody[i] = game.add.sprite(40, 40, 'body');
+        bossBody[i].anchor.setTo(0.5,0.5);
+    }
+    var bossHead = game.add.sprite(50, 40, 'head');
+    bossHead.anchor.set(0.5, 0.5);
+    game.physics.enable(bossHead, Phaser.Physics.ARCADE);
+    bossHead.move = playerMov;
+    for (var i = 0; i <= sections * spacing; i++)
+    {
+        bossPath[i] = new Phaser.Point(40, 40);
+        bossPath[i].angle = 0;
+    }
+    bossHead.update = function () { 
+        bossHead.body.velocity.setTo(0, 0);
+        bossHead.body.angularVelocity = 0;
+
+        if (cursors.up.isDown)
+        {
+            game.physics.arcade.velocityFromRotation(bossHead.rotation, 300, this.body.velocity);
+        
+        var part = bossPath.pop();
+
+        part.setTo(bossHead.x, bossHead.y);
+        part.angle = bossHead.angle;
+
+        bossPath.unshift(part);
+
+        for (var i = 1; i <= sections - 1; i++)
+        {
+            bossBody[i].x = (bossPath[i * spacing]).x;
+            bossBody[i].y = (bossPath[i * spacing]).y;
+            bossBody[i].angle = bossPath[i * spacing].angle;
+        }
+        if (cursors.left.isDown)
+        {
+            bossHead.body.angularVelocity = -100;
+        }
+        else if (cursors.right.isDown)
+        {
+            bossHead.body.angularVelocity = 100;
+        }
+    }
+    screenWrap(bossHead);
+}
+}
 var playerMov = function () {
     if (cursors.up.isDown)
     {
@@ -362,6 +419,7 @@ function newGameManager (){
     GameManager.timer = 0;
     GameManager.score = 0;
     GameManager.ini = false;
+    GameManager.bossKilled = true;
     player = newPlayer();
     bullets = game.add.group();
     asteroids = game.add.group();
@@ -380,7 +438,7 @@ function newGameManager (){
     LvlText.visible = false;
     GameManager.update = function (){
         if(!this.ini){
-            if (asteroids.length == 0){
+            if (asteroids.length == 0 && this.bossKilled == true){
                 GameManager.updateUI();
                 player.x = 400;
                 player.y = 300;
@@ -393,7 +451,7 @@ function newGameManager (){
                 this.timer = game.time.now + 2300;
             }
             else
-                if(game.time.now > this.timer){
+                if(game.time.now > this.timer && this.bossKilled == true){
                     if(game.rnd.between(0, 100) + GameManager.level * 3 > 85)
                         newEnemy(0, game.rnd.between(50,550));
                     this.timer = game.time.now + 4000;
@@ -418,14 +476,20 @@ function newGameManager (){
 
     }
     GameManager.createLevel = function (){
+        if(GameManager.level == 1){
+            newBoss();
+            GameManager.bossKilled = false;
+        }
+        else{
+            for (var i = 0; i < 2 + this.level - 1;i++){
+                if (i % 2 == 0)
+                    newAsteroid(3,game.rnd.between(0,800),game.rnd.between(0,100));
+                else
+                    newAsteroid(3,game.rnd.between(0,800),game.rnd.between(500,600));
+            }
+        }
         game.world.bringToTop(scoreText);
         game.world.bringToTop(livesUI);
-        for (var i = 0; i < 2 + this.level - 1;i++){
-            if (i%2==0)
-                newAsteroid(3,game.rnd.between(0,800),game.rnd.between(0,100));
-            else
-                newAsteroid(3,game.rnd.between(0,800),game.rnd.between(500,600));
-        }
         this.level++;
     }
     GameManager.playerDeath = function (){
