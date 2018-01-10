@@ -352,7 +352,7 @@ function newBoss () {
                 bossHead.body.angularVelocity = game.rnd.between(10, 50);
             else
                 bossHead.body.angularVelocity = game.rnd.between(-50, -10);
-            bossHead.timer = game.time.now + 1500 + game.rnd.between(0, 800)
+            bossHead.timer = game.time.now + 1500 + game.rnd.between(0, 800);
         }
         bossHead.body.velocity.setTo(0, 0);
         game.physics.arcade.velocityFromRotation(bossHead.rotation, GameManager.level * 4 + 250, this.body.velocity);
@@ -513,14 +513,16 @@ function newGameManager (){
             GameManager.lifes--;
         }
         else {
-            for (var i = 1; i <= sections - 1; i++)
-        {
-            bossBody[i].destroy();
-            createExplosion(bossBody[i].x , bossBody[i].y, 1);
-        }
-            bossHead.destroy();
-            createExplosion(bossHead.x, bossHead.y, 2);
-            GameManager.bossKilled = true;
+            if (!GameManager.bossKilled){
+                for (var i = 1; i <= sections - 1; i++)
+                {
+                    bossBody[i].destroy();
+                    createExplosion(bossBody[i].x , bossBody[i].y, 1);
+                }
+                bossHead.destroy();
+                createExplosion(bossHead.x, bossHead.y, 2);
+                GameManager.bossKilled = true; 
+            }
            this.resetGame();
         }
         GameManager.updateUI();
