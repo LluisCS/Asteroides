@@ -115,7 +115,7 @@ function newBullet (x, y, rot, speed, ally) {
         screenWrap(this);
         if(game.physics.arcade.overlap(this, asteroids) || game.physics.arcade.overlap(this, bossHead) || game.physics.arcade.overlap(this, bossBody)){
             this.marked = true;
-            createExplosion(this.x - 20 , this.y - 20, 0.3);
+            createExplosion(this.x  , this.y , 0.3);
         }
         if(ally){
             if (game.physics.arcade.overlap(this, enemies))
@@ -172,7 +172,7 @@ function newPlayer () {
     obj.lateUpdate = function (){
         if(this.marked == 1){
             explosion.play();
-            createExplosion(this.x - 60 , this.y - 60, 0.9);
+            createExplosion(this.x  , this.y , 0.9);
             this.marked = 0;
             GameManager.playerDeath();
         }
@@ -229,7 +229,7 @@ function newEnemy (x, y) {
     obj.lateUpdate = function (){
         if(this.marked){
             explosion.play();
-            createExplosion(this.x - 50 , this.y - 50, 0.6);
+            createExplosion(this.x  , this.y , 0.6);
             this.destroy();
             destruction.play();
         }
@@ -356,7 +356,7 @@ function newBoss () {
             bossHead.timer = game.time.now + 1500 + game.rnd.between(0, 800)
         }
         bossHead.body.velocity.setTo(0, 0);
-        game.physics.arcade.velocityFromRotation(bossHead.rotation, GameManager.level * 5 + 250, this.body.velocity);
+        game.physics.arcade.velocityFromRotation(bossHead.rotation, GameManager.level * 4 + 250, this.body.velocity);
         
         var part = bossPath.pop();
 
@@ -377,13 +377,14 @@ function newBoss () {
     }
     bossHead.lateUpdate = function () {
         if (bossHead.hp <= 0){
+            GameManager.addScore(1000);
             for (var i = 1; i <= sections - 1; i++)
         {
             bossBody[i].destroy();
-            createExplosion(bossBody[i].x - 50 , bossBody[i].y - 50, 1);
+            createExplosion(bossBody[i].x , bossBody[i].y, 1);
         }
             bossHead.destroy();
-            createExplosion(bossHead.x - 100, bossHead.y - 100, 2);
+            createExplosion(bossHead.x, bossHead.y, 2);
             GameManager.bossKilled = true;
         }
     }
@@ -415,6 +416,7 @@ var playerMov = function () {
 };
 function createExplosion (x, y, size){
     exp = game.add.sprite(x, y, 'expAnim');
+    exp.anchor.setTo(0.5,0.5);
     exp.scale.set(size);
     anim = exp.animations.add('boom');
     anim.play(25, false);
@@ -429,7 +431,7 @@ function render() {
 function newGameManager (){
     var GameManager = {};
     GameManager.level = 1;
-    GameManager.lifes = 3;
+    GameManager.lifes = 5;
     GameManager.timer = 0;
     GameManager.score = 0;
     GameManager.ini = false;
@@ -490,7 +492,7 @@ function newGameManager (){
 
     }
     GameManager.createLevel = function (){
-        if (GameManager.level == 1){
+        if (GameManager.level%5 == 0){
             newBoss();
             GameManager.bossKilled = false;
         }
@@ -512,6 +514,14 @@ function newGameManager (){
             GameManager.lifes--;
         }
         else {
+            for (var i = 1; i <= sections - 1; i++)
+        {
+            bossBody[i].destroy();
+            createExplosion(bossBody[i].x , bossBody[i].y, 1);
+        }
+            bossHead.destroy();
+            createExplosion(bossHead.x, bossHead.y, 2);
+            GameManager.bossKilled = true;
            this.resetGame();
         }
         GameManager.updateUI();
