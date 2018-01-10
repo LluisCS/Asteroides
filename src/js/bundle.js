@@ -59,6 +59,7 @@ var asteroids;
 var enemies;
 var livesUI;
 var bulletTime = 0;
+var bossBody, bossHead;
 
 function create() {
     laser = game.add.audio('blaster', 0.1);
@@ -88,6 +89,8 @@ function update() {
     asteroids.callAll('lateUpdate');
     bullets.callAll('lateUpdate');
     enemies.callAll('lateUpdate');
+    if  (GameManager.bossKilled == false)
+        bossHead.lateUpdate();
 }
 
 function newBullet (x, y, rot, speed, ally) {
@@ -110,7 +113,7 @@ function newBullet (x, y, rot, speed, ally) {
     bullet.update = function () {
         game.physics.arcade.velocityFromRotation(rot, speed, this.body.velocity);
         screenWrap(this);
-        if(game.physics.arcade.overlap(this, asteroids)){
+        if(game.physics.arcade.overlap(this, asteroids) || game.physics.arcade.overlap(this, bossHead) || game.physics.arcade.overlap(this, bossBody)){
             this.marked = true;
             createExplosion(this.x - 20 , this.y - 20, 0.3);
         }
@@ -149,9 +152,10 @@ function newPlayer () {
     obj.update = function () {
         obj.shoot(obj.power);
         obj.move();
-        if(obj.immune == 0 && game.physics.arcade.overlap(this, asteroids))
+        if (obj.immune == 0 && (game.physics.arcade.overlap(this, asteroids) || game.physics.arcade.overlap(this, bossHead) || game.physics.arcade.overlap(this, bossBody))){
             this.marked = 1;
-        if(obj.immune == 1){
+            }
+        if (obj.immune == 1){
             if (game.time.now > this.timer){
                 if(this.alpha == 1)
                     this.alpha = 0.5;
@@ -323,7 +327,7 @@ var shoot = function (power) {
 function newBoss () {
     var spacing = 7;
     var sections = 20 + GameManager.level;
-    var bossBody = new Array();
+    bossBody = new Array();
     var bossPath = new Array();
     for (var i = sections - 1; i >= 1; i--){
         if (i == sections - 1)
@@ -331,23 +335,28 @@ function newBoss () {
         else
             bossBody[i] = game.add.sprite(40, 40, 'body');
         bossBody[i].anchor.setTo(0.5,0.5);
+        game.physics.enable(bossBody[i], Phaser.Physics.ARCADE);
     }
-    var bossHead = game.add.sprite(50, 40, 'head');
+    bossHead = game.add.sprite(50, 40, 'head');
+    bossHead.timer = 0;
     bossHead.anchor.set(0.5, 0.5);
     game.physics.enable(bossHead, Phaser.Physics.ARCADE);
-    bossHead.move = playerMov;
+    bossHead.hp = 60 + GameManager.level;
     for (var i = 0; i <= sections * spacing; i++)
     {
         bossPath[i] = new Phaser.Point(40, 40);
         bossPath[i].angle = 0;
     }
-    bossHead.update = function () { 
+    bossHead.update = function () {
+        if (game.time.now > bossHead.timer){
+            if (game.rnd.between(0, 1) == 0)
+                bossHead.body.angularVelocity = game.rnd.between(10, 50);
+            else
+                bossHead.body.angularVelocity = game.rnd.between(-50, -10);
+            bossHead.timer = game.time.now + 1500 + game.rnd.between(0, 800)
+        }
         bossHead.body.velocity.setTo(0, 0);
-        bossHead.body.angularVelocity = 0;
-
-        if (cursors.up.isDown)
-        {
-            game.physics.arcade.velocityFromRotation(bossHead.rotation, 300, this.body.velocity);
+        game.physics.arcade.velocityFromRotation(bossHead.rotation, GameManager.level * 5 + 250, this.body.velocity);
         
         var part = bossPath.pop();
 
@@ -361,18 +370,23 @@ function newBoss () {
             bossBody[i].x = (bossPath[i * spacing]).x;
             bossBody[i].y = (bossPath[i * spacing]).y;
             bossBody[i].angle = bossPath[i * spacing].angle;
-        }
-        if (cursors.left.isDown)
+    }
+    if (game.physics.arcade.overlap(bullets, bossHead) || game.physics.arcade.overlap(bullets, bossBody))
+        bossHead.hp --;
+    screenWrap(bossHead);
+    }
+    bossHead.lateUpdate = function () {
+        if (bossHead.hp <= 0){
+            for (var i = 1; i <= sections - 1; i++)
         {
-            bossHead.body.angularVelocity = -100;
+            bossBody[i].destroy();
+            createExplosion(bossBody[i].x - 50 , bossBody[i].y - 50, 1);
         }
-        else if (cursors.right.isDown)
-        {
-            bossHead.body.angularVelocity = 100;
+            bossHead.destroy();
+            createExplosion(bossHead.x - 100, bossHead.y - 100, 2);
+            GameManager.bossKilled = true;
         }
     }
-    screenWrap(bossHead);
-}
 }
 var playerMov = function () {
     if (cursors.up.isDown)
@@ -452,9 +466,9 @@ function newGameManager (){
             }
             else
                 if(game.time.now > this.timer && this.bossKilled == true){
-                    if(game.rnd.between(0, 100) + GameManager.level * 3 > 85)
+                    if(game.rnd.between(0, 100) + GameManager.level * 2 > 85)
                         newEnemy(0, game.rnd.between(50,550));
-                    this.timer = game.time.now + 4000;
+                    this.timer = game.time.now + 4500;
                 }
             }
         else{
@@ -476,7 +490,7 @@ function newGameManager (){
 
     }
     GameManager.createLevel = function (){
-        if(GameManager.level == 1){
+        if (GameManager.level == 1){
             newBoss();
             GameManager.bossKilled = false;
         }
