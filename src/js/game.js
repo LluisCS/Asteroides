@@ -12,12 +12,12 @@ preload: function(){
     var enemies;
     var livesUI;
     var boss;
+    var bossParts;
 
 },
 
 
 create: function () {
-    boss = game.add.sprite(-100, -100, 'ship');
 
     laser = game.add.audio('blaster', 0.1);
     destruction = game.add.audio('destruct', 0.1);
@@ -31,12 +31,12 @@ create: function () {
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
-   game.add.tileSprite(0, 0, game.width, game.height, 'space');
+    game.add.tileSprite(0, 0, game.width, game.height, 'space');
 
     GameManager = newGameManager();
 
     cursors = game.input.keyboard.createCursorKeys();
-   game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
+    game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
 
     function newBullet (x, y, rot, speed, ally) {
         var skin;
@@ -58,7 +58,7 @@ create: function () {
         bullet.update = function () {
             game.physics.arcade.velocityFromRotation(rot, speed, bullet.body.velocity);
             screenWrap(this);
-            if (game.physics.arcade.overlap(this, asteroids) || game.physics.arcade.overlap(this, boss.Head) || game.physics.arcade.overlap(this, boss.Body)){
+            if (game.physics.arcade.overlap(this, asteroids) || game.physics.arcade.overlap(this, bossParts)){
                 this.marked = true;
                 createExplosion(this.x  , this.y , 0.3);
             }
@@ -136,7 +136,7 @@ create: function () {
         obj.update = function () {
             obj.shoot(obj.power);
             obj.move();
-            if (obj.immune == 0 && (game.physics.arcade.overlap(this, asteroids) || this.game.physics.arcade.overlap(this, boss.Head) || this.game.physics.arcade.overlap(this, boss.Body))){
+            if (obj.immune == 0 && (game.physics.arcade.overlap(this, asteroids) || this.game.physics.arcade.overlap(this, bossParts))){
                 this.marked = 1;
                 }
             if (obj.immune == 1){
@@ -306,12 +306,14 @@ create: function () {
                 boss.Body[i] = game.add.sprite(40, 40, 'body');
             boss.Body[i].anchor.setTo(0.5,0.5);
             game.physics.enable(boss.Body[i], Phaser.Physics.ARCADE);
+            bossParts.add(boss.Body[i]);
         }
         boss.Head = game.add.sprite(50, 40, 'head');
         boss.Head.timer = 0;
         boss.Head.anchor.set(0.5, 0.5);
         game.physics.enable(boss.Head, Phaser.Physics.ARCADE);
         boss.Head.hp = 60 + GameManager.level;
+        bossParts.add(boss.Head);
         for (var i = 0; i <= sections * spacing; i++)
         {
             bossPath[i] = new Phaser.Point(40, 40);
@@ -341,7 +343,7 @@ create: function () {
                 boss.Body[i].y = (bossPath[i * spacing]).y;
                 boss.Body[i].angle = bossPath[i * spacing].angle;
         }
-        if (game.physics.arcade.overlap(bullets, boss.Head) || game.physics.arcade.overlap(bullets, boss.Body))
+        if (game.physics.arcade.overlap(bullets, bossParts))
             boss.Head.hp --;
         screenWrap(boss.Head);
         }
@@ -385,7 +387,7 @@ create: function () {
     }
     function newGameManager (){
         var GameManager = {};
-        GameManager.level = 5;
+        GameManager.level = 1;
         GameManager.lifes = 3;
         GameManager.timer = 0;
         GameManager.score = 0;
@@ -395,6 +397,7 @@ create: function () {
         bullets = game.add.group();
         asteroids = game.add.group();
         enemies = game.add.group();
+        bossParts = game.add.group();
         livesUI = game.add.group();
         scoreText = game.add.text(75, 20, "Score 0");
         scoreText.anchor.setTo(0.5);
@@ -408,11 +411,14 @@ create: function () {
         LvlText.fill ='#ffffff';
         LvlText.visible = false;
         GameManager.update = function (){
+            if(GameManager.lifes == -1 && game.time.now > this.timer){
+                game.state.start('menu');
+            }
             if(!this.ini){
                 if (asteroids.length == 0 && this.bossKilled == true){
                     GameManager.updateUI();
-                    player.x = 400;
-                    player.y = 300;
+                    player.x = game.world.centerX;
+                    player.y = game.world.centerY;
                     bullets.removeAll(true);
                     enemies.removeAll(true);
                     game.world.bringToTop(LvlText);
@@ -467,17 +473,23 @@ create: function () {
         GameManager.playerDeath = function (){
             if(GameManager.lifes > 0){
                 player.revive();
-                GameManager.lifes--;
             }
             else {
-                if (!GameManager.bossKilled){
+                player.destroy();
+                game.world.bringToTop(LvlText);
+                LvlText.setText("G A M E  O V E R");
+                LvlText.fontSize = 47;
+                LvlText.visible = true;
+                this.timer = game.time.now + 2300;
+                /*if (!GameManager.bossKilled){
                     boss.kill();
                     this.resetGame();
-                }
+                }*/
             }
+            GameManager.lifes--;
             GameManager.updateUI();
         }
-        GameManager.resetGame = function (){
+        /*GameManager.resetGame = function (){
             player.destroy();
             player = newPlayer();
             this.lifes = 3;
@@ -487,7 +499,7 @@ create: function () {
             asteroids.removeAll(true);
             bullets.removeAll(true);
             enemies.removeAll(true);
-        }
+        }*/
         GameManager.addScore = function(points ){
             GameManager.score += points;
             scoreText.setText("Score "+ GameManager.score);
