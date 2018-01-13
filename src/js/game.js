@@ -1,3 +1,5 @@
+//'use strict';
+
 var playState = {
 
 preload: function(){
@@ -5,7 +7,7 @@ preload: function(){
     var cursors;
     var GameManager;
     var laser, destruction, explosion, enBlaster, music;
-    var scoreText;
+    var scoreText, LvlText;
 
     var bullets;
     var asteroids;
@@ -18,6 +20,7 @@ preload: function(){
 
 
 create: function () {
+    //var GM = require('../gameManager.js');
 
     laser = game.add.audio('blaster', 0.1);
     destruction = game.add.audio('destruct', 0.1);
@@ -91,7 +94,7 @@ create: function () {
         obj.timer = 0;
         obj.period = 0;
         obj.bulletTime = 0;
-        this.components = [];
+        obj.components = [];
     
         obj.shoot = function (power) {
             if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
@@ -383,8 +386,6 @@ create: function () {
     function EndAnimation(sprite, animation){
         sprite.destroy();
     }
-    render: function render() {
-    }
     function newGameManager (){
         var GameManager = {};
         GameManager.level = 1;
@@ -422,7 +423,10 @@ create: function () {
                     bullets.removeAll(true);
                     enemies.removeAll(true);
                     game.world.bringToTop(LvlText);
-                    LvlText.setText("L E V E L  " + this.level);
+                    if(GameManager.level%5 == 0)
+                        LvlText.setText("! D A N G E R !");
+                    else
+                        LvlText.setText("L E V E L  " + this.level);
                     LvlText.visible = true;
                     this.ini = true;
                     this.timer = game.time.now + 2300;
@@ -481,10 +485,6 @@ create: function () {
                 LvlText.fontSize = 47;
                 LvlText.visible = true;
                 this.timer = game.time.now + 2300;
-                /*if (!GameManager.bossKilled){
-                    boss.kill();
-                    this.resetGame();
-                }*/
             }
             GameManager.lifes--;
             GameManager.updateUI();
@@ -509,7 +509,8 @@ create: function () {
 
 },
 
-    update: function () {
+    
+update: function () {
         GameManager.update();
         player.lateUpdate();
         asteroids.callAll('lateUpdate');
@@ -517,5 +518,8 @@ create: function () {
         enemies.callAll('lateUpdate');
         if  (GameManager.bossKilled == false)
             boss.Head.lateUpdate();
+        },
+
+render: function () {
         }
 };

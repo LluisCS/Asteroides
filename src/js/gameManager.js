@@ -1,3 +1,4 @@
+
 function newGameManager (){
     var GameManager = {};
     GameManager.level = 1;
@@ -10,6 +11,7 @@ function newGameManager (){
     bullets = game.add.group();
     asteroids = game.add.group();
     enemies = game.add.group();
+    bossParts = game.add.group();
     livesUI = game.add.group();
     scoreText = game.add.text(75, 20, "Score 0");
     scoreText.anchor.setTo(0.5);
@@ -23,15 +25,21 @@ function newGameManager (){
     LvlText.fill ='#ffffff';
     LvlText.visible = false;
     GameManager.update = function (){
+        if(GameManager.lifes == -1 && game.time.now > this.timer){
+            game.state.start('menu');
+        }
         if(!this.ini){
             if (asteroids.length == 0 && this.bossKilled == true){
                 GameManager.updateUI();
-                player.x = 400;
-                player.y = 300;
+                player.x = game.world.centerX;
+                player.y = game.world.centerY;
                 bullets.removeAll(true);
                 enemies.removeAll(true);
                 game.world.bringToTop(LvlText);
-                LvlText.setText("L E V E L  " + this.level);
+                if(GameManager.level%5 == 0)
+                    LvlText.setText("! D A N G E R !");
+                else
+                    LvlText.setText("L E V E L  " + this.level);
                 LvlText.visible = true;
                 this.ini = true;
                 this.timer = game.time.now + 2300;
@@ -63,7 +71,7 @@ function newGameManager (){
     }
     GameManager.createLevel = function (){
         if (GameManager.level%5 == 0){
-            newBoss();
+            boss = newBoss();
             GameManager.bossKilled = false;
         }
         else{
@@ -82,24 +90,23 @@ function newGameManager (){
     GameManager.playerDeath = function (){
         if(GameManager.lifes > 0){
             player.revive();
-            GameManager.lifes--;
         }
         else {
-            if (!GameManager.bossKilled){
-                for (var i = 1; i <= sections - 1; i++)
-                {
-                    bossBody[i].destroy();
-                    createExplosion(bossBody[i].x , bossBody[i].y, 1);
-                }
-                bossHead.destroy();
-                createExplosion(bossHead.x, bossHead.y, 2);
-                GameManager.bossKilled = true; 
-            }
-           this.resetGame();
+            player.destroy();
+            game.world.bringToTop(LvlText);
+            LvlText.setText("G A M E  O V E R");
+            LvlText.fontSize = 47;
+            LvlText.visible = true;
+            this.timer = game.time.now + 2300;
+            /*if (!GameManager.bossKilled){
+                boss.kill();
+                this.resetGame();
+            }*/
         }
+        GameManager.lifes--;
         GameManager.updateUI();
     }
-    GameManager.resetGame = function (){
+    /*GameManager.resetGame = function (){
         player.destroy();
         player = newPlayer();
         this.lifes = 3;
@@ -109,10 +116,12 @@ function newGameManager (){
         asteroids.removeAll(true);
         bullets.removeAll(true);
         enemies.removeAll(true);
-    }
+    }*/
     GameManager.addScore = function(points ){
         GameManager.score += points;
         scoreText.setText("Score "+ GameManager.score);
     }
     return GameManager;
 }
+
+module.exports = newGameManager;

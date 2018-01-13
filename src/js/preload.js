@@ -12,7 +12,8 @@ preload: function () {
     game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
     game.load.image('playButton', 'images/PlayButton.png');
     game.load.image('title', 'images/title.png');
-    game.load.image('space', 'images/deep-space.jpg');
+    game.load.image('space', 'images/deepSpace.jpg');
+    game.load.image('space2', 'images/menuBackground.jpg');
     game.load.image('bullet', 'images/bullets3.png');
     game.load.image('bullet2', 'images/bullets2.png');
     game.load.image('ship', 'images/ship.png');
