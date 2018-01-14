@@ -1,5 +1,3 @@
-//'use strict';
-
 var playState = {
 
 preload: function(){
@@ -20,7 +18,6 @@ preload: function(){
 
 
 create: function () {
-    //var GM = require('../gameManager.js');
 
     laser = game.add.audio('blaster', 0.1);
     destruction = game.add.audio('destruct', 0.1);
@@ -34,12 +31,12 @@ create: function () {
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
-    game.add.tileSprite(0, 0, game.width, game.height, 'space');
+   game.add.tileSprite(0, 0, game.width, game.height, 'space');
 
     GameManager = newGameManager();
 
     cursors = game.input.keyboard.createCursorKeys();
-    game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
+   game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
 
     function newBullet (x, y, rot, speed, ally) {
         var skin;
@@ -94,7 +91,7 @@ create: function () {
         obj.timer = 0;
         obj.period = 0;
         obj.bulletTime = 0;
-        obj.components = [];
+        //this.components = [];
     
         obj.shoot = function (power) {
             if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
@@ -386,9 +383,10 @@ create: function () {
     function EndAnimation(sprite, animation){
         sprite.destroy();
     }
+
     function newGameManager (){
         var GameManager = {};
-        GameManager.level = 1;
+        GameManager.level = 5;
         GameManager.lifes = 3;
         GameManager.timer = 0;
         GameManager.score = 0;

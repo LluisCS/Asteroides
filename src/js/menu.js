@@ -1,4 +1,3 @@
-
 var menuState = {
     preload: function(){
         var button;
@@ -21,4 +20,3 @@ var menuState = {
         }
     }
 };
-
