@@ -16,6 +16,9 @@ var preloadState = {
         game.load.image('space2', 'images/menuBackground.jpg');
         game.load.image('bullet', 'images/bullets3.png');
         game.load.image('bullet2', 'images/bullets2.png');
+        game.load.image('powerUp1', 'images/1up.png');
+        game.load.image('powerUp2', 'images/x3.png');
+        game.load.image('powerUp3', 'images/x3.png');
         game.load.image('ship', 'images/ship.png');
         game.load.image('ship2', 'images/ship3.png');
         game.load.image('3Asteroid1', 'images/BigAsteroid1.png');
@@ -32,6 +35,7 @@ var preloadState = {
         game.load.image('tail', 'images/DevourerTail.png');
         game.load.spritesheet('expAnim', 'images/explosion_anim.png', 134, 134, 12);
         game.load.audio('blaster', 'audio/blaster.mp3');
+        game.load.audio('Up', 'audio/powerUp.mp3');
         game.load.audio('destruct', 'audio/destruction.mp3');
         game.load.audio('explode', 'audio/explosion.mp3');
         game.load.audio('enemyBlaster', 'audio/enemyBlaster.mp3');

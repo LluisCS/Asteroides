@@ -20,6 +20,7 @@ preload: function(){
 create: function () {
 
     laser = game.add.audio('blaster', 0.1);
+    pUp = game.add.audio('Up', 0.4);
     destruction = game.add.audio('destruct', 0.1);
     explosion = game.add.audio('explode', 0.2);
     enBlaster = game.add.audio('enemyBlaster', 0.3);
@@ -96,7 +97,7 @@ create: function () {
         obj.shoot = function (power) {
             if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
             {    
-                if (game.time.now > this.bulletTime)
+                if (game.time.now > this.bulletTime || this.power == 2)
                 {
                     laser.play();
                     newBullet (this.body.x + 28, this.body.y + 20, this.rotation, 450, true); 
@@ -136,9 +137,12 @@ create: function () {
         obj.update = function () {
             obj.shoot(obj.power);
             obj.move();
-            if (obj.immune == 0 && (game.physics.arcade.overlap(this, asteroids) || this.game.physics.arcade.overlap(this, bossParts))){
-                this.marked = 1;
-                }
+            if (obj.immune == 0 ){
+                if  (game.physics.arcade.overlap(this, asteroids) || this.game.physics.arcade.overlap(this, bossParts))
+                    this.marked = 1;
+                else if (this.power > 0 && game.time.now > this.period)
+                    this.power = 0;
+            }
             if (obj.immune == 1){
                 if (game.time.now > this.timer){
                     if(this.alpha == 1)
@@ -162,6 +166,7 @@ create: function () {
             }
         }
         obj.revive = function (){
+            this.power = 0;
             obj.immune = 1;
             this.body.acceleration.set(0);
             this.body.velocity.set(0);
@@ -169,7 +174,45 @@ create: function () {
             this.y = 300;
             obj.period = game.time.now;
         }
+        obj.takePower = function (num){
+            if(num == 1){
+                GameManager.lifes++;
+                GameManager.updateUI();
+            }
+            else if (num == 2){
+                this.power = 1;
+                this.period = game.time.now + 12000;
+            }
+            else{
+                this.power = 2;
+                this.period = game.time.now + 12000;
+            }
+        }
         return obj;
+    }
+    function newDrop (x, y) {
+        var num;
+        var dropNum = game.rnd.between(0,10);
+        if (dropNum <= 6){
+            num = 1;
+        }
+        else if(dropNum <= 9){
+            num = 2;
+        }
+        else{
+            num = 2;
+        }
+        var obj = game.add.sprite(x, y, 'powerUp' + num);
+        obj.anchor.set(0.5);
+        game.physics.enable(obj, Phaser.Physics.ARCADE);
+        obj.num = num;
+        obj.update = function (){
+            if (player.immune == 0 && game.physics.arcade.overlap(this, player)){
+                pUp.play();    
+                player.takePower(obj.num);
+                this.destroy();
+            }
+        }
     }
     function newEnemy (x, y) {
         var obj = game.add.sprite(x, y, 'ship');
@@ -258,7 +301,9 @@ create: function () {
             }
             asteroid.lateUpdate = function () {
                 if(this.marked)
-                {
+                {   
+                    if(game.rnd.between(0, 100) <= 10)
+                        newDrop(this.x, this.y);
                     destruction.play();
                     this.spawn();
                     this.destroy();
@@ -349,7 +394,7 @@ create: function () {
         }
         boss.Head.lateUpdate = function () {
             if (boss.Head.hp <= 0){
-                GameManager.addScore(1000);
+                GameManager.addScore(2000);
                 for (var i = 1; i <= sections - 1; i++)
             {
                 boss.Body[i].destroy();
@@ -386,7 +431,7 @@ create: function () {
 
     function newGameManager (){
         var GameManager = {};
-        GameManager.level = 5;
+        GameManager.level = 1;
         GameManager.lifes = 3;
         GameManager.timer = 0;
         GameManager.score = 0;
