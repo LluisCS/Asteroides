@@ -97,14 +97,20 @@ create: function () {
         obj.shoot = function (power) {
             if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
             {    
-                if (game.time.now > this.bulletTime || this.power == 2)
+                if (game.time.now > this.bulletTime)
                 {
                     laser.play();
-                    newBullet (this.body.x + 28, this.body.y + 20, this.rotation, 450, true); 
-                    this.bulletTime = game.time.now + 350;
                     if (power == 1){
-                    newBullet (this.body.x + 28, this.body.y + 20, this.rotation+0.2, 450, true);
-                    newBullet (this.body.x + 28, this.body.y + 20, this.rotation-0.2, 450, true);
+                        newBullet (this.body.x + 28, this.body.y + 20, this.rotation+0.2, 450, true);
+                        newBullet (this.body.x + 28, this.body.y + 20, this.rotation-0.2, 450, true);
+                    }
+                    if(power == 2){
+                        newBullet (this.body.x + 28, this.body.y + 20, this.rotation + game.rnd.between(-3,3)/10, 450, true);
+                        this.bulletTime = game.time.now + 100;
+                    }
+                    else{
+                        newBullet (this.body.x + 28, this.body.y + 20, this.rotation, 450, true); 
+                        this.bulletTime = game.time.now + 350;
                     }
                 }
             }
@@ -193,14 +199,14 @@ create: function () {
     function newDrop (x, y) {
         var num;
         var dropNum = game.rnd.between(0,10);
-        if (dropNum <= 6){
+        if (dropNum <= 3){
             num = 1;
         }
-        else if(dropNum <= 9){
+        else if(dropNum <= 6){
             num = 2;
         }
         else{
-            num = 2;
+            num = 3;
         }
         var obj = game.add.sprite(x, y, 'powerUp' + num);
         obj.anchor.set(0.5);
