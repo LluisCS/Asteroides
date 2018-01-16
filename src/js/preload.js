@@ -14,6 +14,10 @@ var preloadState = {
         game.load.image('creditsButton', 'images/Button2.png');
         game.load.image('controlsButton', 'images/Button3.png');
         game.load.image('backButton', 'images/Button4.png');
+        game.load.image('credits', 'images/credits.png');
+        game.load.image('up', 'images/upKey.png');
+        game.load.image('side', 'images/sideKeys.png');
+        game.load.image('spacebar', 'images/spacebar.png');
         game.load.image('title', 'images/title.png');
         game.load.image('space', 'images/deepSpace.jpg');
         game.load.image('space2', 'images/menuBackground.jpg');

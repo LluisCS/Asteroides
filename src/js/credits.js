@@ -11,5 +11,7 @@ var creditsState = {
         function actionOnClick () {
             game.state.start('menu');
         }
+        var credits = game.add.sprite(400, 300, 'credits');
+        credits.anchor.set(0.5);
     }
 };
