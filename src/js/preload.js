@@ -11,6 +11,9 @@ var preloadState = {
         };
         game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
         game.load.image('playButton', 'images/PlayButton.png');
+        game.load.image('creditsButton', 'images/Button2.png');
+        game.load.image('controlsButton', 'images/Button3.png');
+        game.load.image('backButton', 'images/Button4.png');
         game.load.image('title', 'images/title.png');
         game.load.image('space', 'images/deepSpace.jpg');
         game.load.image('space2', 'images/menuBackground.jpg');

@@ -5,6 +5,8 @@ var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'asteroides');
 
 //var GM = require('./gameManager.js');
 game.state.add('preload', preloadState);
+game.state.add('credits', creditsState);
+game.state.add('controls', controlsState);
 game.state.add('menu', menuState);
 game.state.add('play', playState);
 
